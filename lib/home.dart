@@ -1,8 +1,10 @@
-import 'dart:developer';
+import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'commonComponents/customCard.dart';
 
 class HomePage extends StatefulWidget {
@@ -18,17 +20,76 @@ class _HomePageState extends State<HomePage> {
   TextEditingController taskTitleInputController;
   TextEditingController taskDescripInputController;
   FirebaseUser currentUser;
+  // final Firestore _db = Firestore.instance;
+  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
+  // StreamSubscription iosSubscription;
+  bool dialVisible = true;
 
   @override
   initState() {
     taskTitleInputController = new TextEditingController();
     taskDescripInputController = new TextEditingController();
-    this.getCurrentUser();
+    firebaseCloudMessagingListeners();
+    
     super.initState();
+        
+  }
+
+  void setDialVisible(bool value) {
+    setState(() {
+      dialVisible = value;
+    });
   }
 
   void getCurrentUser() async {
     currentUser = await FirebaseAuth.instance.currentUser();
+  }
+
+  
+  void firebaseCloudMessagingListeners() {
+  if (Platform.isIOS) iOSPermission();
+
+  _firebaseMessaging.getToken().then((token){
+    print(token);
+  });
+
+  _firebaseMessaging.configure(
+    onMessage: (Map<String, dynamic> message) async {
+      print('on message $message');
+       showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                        content: ListTile(
+                        title: Text(message['notification']['title']),
+                        subtitle: Text(message['notification']['body']),
+                        ),
+                        actions: <Widget>[
+                        FlatButton(
+                            child: Text('Ok'),
+                            onPressed: () => Navigator.of(context).pop(),
+                        ),
+                    ],
+                ),
+       );
+    },
+    onResume: (Map<String, dynamic> message) async {
+      print('on resume $message');
+    },
+    onLaunch: (Map<String, dynamic> message) async {
+      print('on launch $message');
+    },
+  );
+}
+
+  void iOSPermission() {
+    _firebaseMessaging.requestNotificationPermissions(
+        IosNotificationSettings(sound: true, badge: true, alert: true)
+    );
+    _firebaseMessaging.onIosSettingsRegistered
+        .listen((IosNotificationSettings settings)
+    {
+      print("Settings registered: $settings");
+    });
   }
 
   @override
@@ -80,18 +141,61 @@ class _HomePageState extends State<HomePage> {
               },
             )),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showDialog,
-        tooltip: 'Add',
-        child: Icon(Icons.add),
-      ),
+      // floatingActionButton: FloatingActionButton(
+      //   onPressed: _showDialog,
+      //   tooltip: 'Add',
+      //   child: Icon(Icons.add),
+      // ),
+      floatingActionButton: buildSpeedDial()
     );
   }
+
+  SpeedDial buildSpeedDial() {
+    return SpeedDial(
+      animatedIcon: AnimatedIcons.menu_close,
+      animatedIconTheme: IconThemeData(size: 22.0),
+      child: Icon(Icons.add, color:Colors.white),
+      onOpen: () => print('OPENING DIAL'),
+      onClose: () => print('DIAL CLOSED'),
+      visible: dialVisible,
+      curve: Curves.bounceIn,
+      children: [
+        SpeedDialChild(
+          child: Icon(Icons.accessibility, color: Colors.white),
+          backgroundColor: Colors.deepOrange,
+          onTap: () => print('FIRST CHILD'),
+          label: 'Register Customer',
+          labelStyle: TextStyle(fontWeight: FontWeight.w500),
+          labelBackgroundColor: Colors.deepOrangeAccent,
+        ),
+        SpeedDialChild(
+          child: Icon(Icons.local_shipping, color: Colors.white),
+          backgroundColor: Colors.green,
+          onTap: () => {print('SECOND CHILD'), _showDialog()},
+          label: 'Add Tracking',
+          labelStyle: TextStyle(fontWeight: FontWeight.w500),
+          labelBackgroundColor: Colors.green,
+        ),
+        // SpeedDialChild(
+        //   child: Icon(Icons.keyboard_voice, color: Colors.white),
+        //   backgroundColor: Colors.blue,
+        //   onTap: () => print('THIRD CHILD'),
+        //   labelWidget: Container(
+        //     color: Colors.blue,
+        //     margin: EdgeInsets.only(right: 10),
+        //     padding: EdgeInsets.all(6),
+        //     child: Text('Custom Label Widget'),
+        //   ),
+        // ),
+      ],
+    );
+  }
+
 
   _showDialog() async {
     await showDialog<String>(
       context: context,
-      child: AlertDialog(
+       builder: (context) => new  AlertDialog(
         contentPadding: const EdgeInsets.all(16.0),
         content: Column(
           children: <Widget>[

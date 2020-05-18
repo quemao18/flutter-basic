@@ -1,4 +1,4 @@
-package com.example.myfirstapp;
+package com.asertech.shippingjoin;
 
 import android.os.Bundle;
 import io.flutter.app.FlutterActivity;

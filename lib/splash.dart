@@ -24,14 +24,15 @@ class _SplashPageState extends State<SplashPage> {
                       .collection("users")
                       .document(currentUser.uid)
                       .get()
-                      .then((DocumentSnapshot result) =>
+                      .then((DocumentSnapshot result) =>{
                           Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
                                   builder: (context) => HomePage(
-                                        title: result["fname"] + "'s Tasks",
+                                        title: result["firstName"]!=null ? result["firstName"] : ''  + "'s Tasks",
                                         uid: currentUser.uid,
-                                      ))))
+                                      )))
+                      })
                       .catchError((err) => print(err))
                 }
             })

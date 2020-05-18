@@ -1,39 +1,37 @@
 {
   "project_info": {
-    "project_number": "812319833031",
-    "firebase_url": "https://firstflutterapp-8ec85.firebaseio.com",
-    "project_id": "firstflutterapp-8ec85",
-    "storage_bucket": "firstflutterapp-8ec85.appspot.com"
+    "project_number": "138521638081",
+    "firebase_url": "https://shipping-join.firebaseio.com",
+    "project_id": "shipping-join",
+    "storage_bucket": "shipping-join.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:812319833031:android:f363407d1d70e5c1",
+        "mobilesdk_app_id": "1:138521638081:android:e7e59d98b816fc010d9040",
         "android_client_info": {
-          "package_name": "com.example.myfirstapp"
+          "package_name": "com.asertech.shippingjoin"
         }
       },
       "oauth_client": [
         {
-          "client_id": "812319833031-a3v954b8bmf6mo738m6007s8vhs2g1u2.apps.googleusercontent.com",
+          "client_id": "138521638081-9bjeparlr11j1ft04fpbos1k6fismin8.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyB5n-cBhbimVZVzZopbvqmpBqsc6SppOv4"
+          "current_key": "AIzaSyDXuPnMIiAuAYLjafxM4KE2H7GDhpKbuSI"
         }
       ],
       "services": {
-        "analytics_service": {
-          "status": 1
-        },
         "appinvite_service": {
-          "status": 1,
-          "other_platform_oauth_client": []
-        },
-        "ads_service": {
-          "status": 2
+          "other_platform_oauth_client": [
+            {
+              "client_id": "138521638081-9bjeparlr11j1ft04fpbos1k6fismin8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

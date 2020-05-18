@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -14,6 +17,8 @@ class _LoginPageState extends State<LoginPage> {
   final GlobalKey<FormState> _loginFormKey = GlobalKey<FormState>();
   TextEditingController emailInputController;
   TextEditingController pwdInputController;
+  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
+  final _db = Firestore.instance;
 
   @override
   initState() {
@@ -38,6 +43,26 @@ class _LoginPageState extends State<LoginPage> {
       return 'Password must be longer than 8 characters';
     } else {
       return null;
+    }
+  }
+
+      /// Get the token, save it to the database for current user
+  _saveDeviceToken(uid) async {
+    // Get the token for this device
+    try{
+    String fcmToken = await _firebaseMessaging.getToken();
+    // print(fcmToken);
+    // Save it to Firestore
+    if (fcmToken != null) {
+      await _db.collection('users').document(uid).updateData({
+        'token': fcmToken,
+        'createdAt': FieldValue.serverTimestamp(), // optional
+        'platform': Platform.operatingSystem // optional
+      });
+    }
+    }catch(e){
+      print(e.toString());
+      print('error save data base firebase');
     }
   }
 
@@ -68,6 +93,7 @@ class _LoginPageState extends State<LoginPage> {
                     obscureText: true,
                     validator: pwdValidator,
                   ),
+                  SizedBox(height: 10,),
                   RaisedButton(
                     child: Text("Login"),
                     color: Theme.of(context).primaryColor,
@@ -80,17 +106,19 @@ class _LoginPageState extends State<LoginPage> {
                                 password: pwdInputController.text)
                             .then((currentUser) => Firestore.instance
                                 .collection("users")
-                                .document(currentUser.uid)
+                                .document(currentUser.user.uid)
                                 .get()
-                                .then((DocumentSnapshot result) =>
+                                .then((DocumentSnapshot result) => {
+                                    _saveDeviceToken(currentUser.user.uid),
                                     Navigator.pushReplacement(
                                         context,
                                         MaterialPageRoute(
                                             builder: (context) => HomePage(
-                                                  title: result["fname"] +
+                                                  title: result["firstName"] +
                                                       "'s Tasks",
-                                                  uid: currentUser.uid,
-                                                ))))
+                                                  uid: currentUser.user.uid,
+                                                )))
+                                })
                                 .catchError((err) => print(err)))
                             .catchError((err) => print(err));
                       }

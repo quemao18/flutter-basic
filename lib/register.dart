@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -17,6 +20,9 @@ class _RegisterPageState extends State<RegisterPage> {
   TextEditingController emailInputController;
   TextEditingController pwdInputController;
   TextEditingController confirmPwdInputController;
+  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
+  final _db = Firestore.instance;
+
 
   @override
   initState() {
@@ -47,8 +53,29 @@ class _RegisterPageState extends State<RegisterPage> {
     }
   }
 
+    /// Get the token, save it to the database for current user
+  _saveDeviceToken(uid) async {
+    // Get the token for this device
+    try{
+    String fcmToken = await _firebaseMessaging.getToken();
+    // print(fcmToken);
+    // Save it to Firestore
+    if (fcmToken != null) {
+      await _db.collection('users').document(uid).updateData({
+        'fcmToken': fcmToken,
+        'createdAt': FieldValue.serverTimestamp(), // optional
+        'platform': Platform.operatingSystem // optional
+      });
+    }
+    }catch(e){
+      print(e.toString());
+      print('error save data base firebase');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+   
     return Scaffold(
         appBar: AppBar(
           title: Text("Register"),
@@ -68,6 +95,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       if (value.length < 3) {
                         return "Please enter a valid first name.";
                       }
+                      return null;
                     },
                   ),
                   TextFormField(
@@ -78,6 +106,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         if (value.length < 3) {
                           return "Please enter a valid last name.";
                         }
+                        return null;
                       }),
                   TextFormField(
                     decoration: InputDecoration(
@@ -100,6 +129,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     obscureText: true,
                     validator: pwdValidator,
                   ),
+                  SizedBox(height: 10,),
                   RaisedButton(
                     child: Text("Register"),
                     color: Theme.of(context).primaryColor,
@@ -114,23 +144,21 @@ class _RegisterPageState extends State<RegisterPage> {
                                   password: pwdInputController.text)
                               .then((currentUser) => Firestore.instance
                                   .collection("users")
-                                  .document(currentUser.uid)
+                                  .document(currentUser.user.uid)
                                   .setData({
-                                    "uid": currentUser.uid,
-                                    "fname": firstNameInputController.text,
-                                    "surname": lastNameInputController.text,
+                                    "uid": currentUser.user.uid,
+                                    "firstName": firstNameInputController.text,
+                                    "lastName": lastNameInputController.text,
                                     "email": emailInputController.text,
                                   })
                                   .then((result) => {
+                                    _saveDeviceToken(currentUser.user.uid),
                                         Navigator.pushAndRemoveUntil(
                                             context,
                                             MaterialPageRoute(
                                                 builder: (context) => HomePage(
-                                                      title:
-                                                          firstNameInputController
-                                                                  .text +
-                                                              "'s Tasks",
-                                                      uid: currentUser.uid,
+                                                      title: firstNameInputController.text + "'s Tasks",
+                                                      uid: currentUser.user.uid,
                                                     )),
                                             (_) => false),
                                         firstNameInputController.clear(),
